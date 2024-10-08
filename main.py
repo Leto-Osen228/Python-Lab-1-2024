@@ -1,11 +1,19 @@
 from AnsiColors import BackgroundColors
 
-for i in range(6):
-    if i < 3:
-        print(f'{BackgroundColors.BLUE}{"  " * (2 * i + 2)}{BackgroundColors.WHITE}{"  " * (14 - 2 * i)}{BackgroundColors.END}')
-    else:
-        print(f'{BackgroundColors.BLUE}{"  " * (12 - 2 * i)}{BackgroundColors.RED}{"  " * (4 + 2 * i)}{BackgroundColors.END}')
+import os
+import sys
 
+size:os.terminal_size = os.get_terminal_size()
+print(type(size), size.columns, size.lines)
+FLAG_COLORS = (BackgroundColors.YELLOW.value,
+               BackgroundColors.GREEN.value,
+               BackgroundColors.RED.value)
+
+for line in range(size.lines):
+    # if size.lines % 3 == 0:
+    color = FLAG_COLORS[int(3 * line / size.lines)]
+    print(f'\n\r{color}{line:2}{" " * (size.columns-2)}{BackgroundColors.END.value}', end='')
+sys.stdin.read(1)
 '''
 plot_list = [[0 for i in range(10)] for i in range(10)]
 result = [0 for i in range(10)]
