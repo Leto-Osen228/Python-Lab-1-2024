@@ -1,4 +1,4 @@
-from Terminal import Terminal
+from Terminal import Terminal, BorderArea
 
 from signal import signal, SIGWINCH
 
@@ -133,7 +133,3 @@ class App:
 				if self.tab.handler() == -1:
 					break
 		print(self.tab.string)
-
-if __name__ == "__main__":
-	app = App()
-	app.run()

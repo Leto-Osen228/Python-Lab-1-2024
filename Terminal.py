@@ -4,6 +4,12 @@ import time
 from signal import signal, SIGWINCH
 import select
 
+class Point:
+	def __init__(self, x, y) -> None:
+		self.x = x
+		self.y = y
+
+	x, y = 0, 0
 
 class Style:
 	def set(style:list):
@@ -17,8 +23,8 @@ class Cursor:
 		sys.stdout.write(f"\x1b[?25{('l', 'h')[flag]}")
 
 
-	def move(row, col):
-		sys.stdout.write(f"\x1b[{row};{col}H")
+	def move(point:Point):
+		sys.stdout.write(f"\x1b[{point.x};{point.y}H")
 		sys.stdout.flush()
 
 
@@ -56,7 +62,7 @@ class Terminal:
 
 
 	def clear(self):
-		Cursor.move(1, 1)
+		Cursor.move(Point(1, 1))
 		Style.reset()
 		sys.stdout.write("\x1b[2J")   # Очищаем область
 
@@ -93,7 +99,7 @@ class Terminal:
 
 	def border(self, style=["5", "32"]):
 		size = os.get_terminal_size()
-		Cursor.move(1, 1)
+		Cursor.move(Point(1, 1))
 		Style.set(style)
 		sys.stdout.write(f"┌{'─' * (size.columns-2)}┐")
 		sys.stdout.write(f"│{' ' * (size.columns-2)}│" * (size.lines-2))
@@ -105,7 +111,7 @@ class Terminal:
 	def open(self):
 		sys.stdout.write("\x1b[?1049h") # Поднять изолированный режим
 		sys.stdout.write("\x1b[?1000h") # Поднять события мыши
-		Cursor.move(1, 1)
+		Cursor.move(Point(1, 1))
 		# self.cursor.view(False)
 		os.system('stty -echo')          # Скрыть ввод
 		os.system("stty -icanon")
@@ -132,3 +138,56 @@ class Terminal:
 		if exc_type is not None:
 			print(f"Error: {exc_type}, {exc_value}")
 		return False
+
+class Widget:
+	_deep = 1
+	# area is Widget or Terminal
+	def __init__(self, area) -> None:
+		self.area = area
+		self.widgets = set()
+
+	def view(self):
+		if not self.widgets is None:
+			for w in self.widgets:
+				w.view()
+		
+
+	def handler(self):
+		if not self.widgets is None:
+			for w in self.widgets:
+				w.handler()
+
+	def getSize(self) -> tuple[Point]:
+		return self._area.getSize()
+	
+	def addWidget(self, widget):
+		if self.widgets is None:
+			raise
+		self.widgets.add(widget)
+
+
+class BorderArea (Widget):
+	def __init__(self, area) -> None:
+		super().__init__(area=area)
+		area.addWidget(self)
+		self._terminal = area.terminal
+
+	def view(self):
+		start, end = super().getSize()
+		Cursor.move(start.x, start.y)
+		for y in range(start.y, end.y-1):
+			self.cursor.move(Point(start.x, y))
+			sys.stdout.write(f"│{' '*(end.x - start.x)}│")
+		super().view()
+
+class MainArea:
+	def getSize() -> tuple[Point]:
+		return Point(40, 20)
+
+if __name__ == "__main__":
+	with Terminal() as temp:
+		MainArea
+		main = BorderArea(temp)
+		signal(SIGWINCH, lambda a, b: main.view())
+		while True:
+			pass
